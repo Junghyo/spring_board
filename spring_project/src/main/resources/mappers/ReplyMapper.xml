@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yoda.board.repository.ReplyDAOImpl">
+	<resultMap type="reply" id="replyResult"/>
+	<select id="listR" resultType="reply">
+		<include refid="pagingHeader"/>
+			SELECT R.RNO, R.NO, R.REPLYTEXT, R.REPLYER, R.REGDATE, R.UPTDATE, M.NAME, R.SECRET,
+			(SELECT B.WRITER FROM BOARD B WHERE B.NO=R.NO) AS WRITER
+			FROM REPLY R, MEMBER M
+			WHERE R.REPLYER = M.ID AND R.NO = #{no}
+			ORDER BY R.RNO
+		<include refid="pagingFooter"/>
+	</select>
+	<insert id="insertR">
+		INSERT INTO REPLY(RNO, NO, REPLYTEXT, REPLYER, SECRET) VALUES(REPLY_SEQ.NEXTVAL, #{no}, #{replytext}, #{replyer}, #{secret})
+	</insert>
+	
+	<!-- 댓글 갯수 페이징 처리 -->
+	<select id="count" resultType="int">
+		SELECT COUNT(*) FROM REPLY WHERE NO = #{no}
+	</select>
+	<!-- 페이징 sql -->
+	<sql id="pagingHeader">
+		SELECT * FROM (SELECT ROWNUM AS RN, A.* FROM (
+	</sql>
+	<sql id="pagingFooter">
+		) A ) WHERE RN BETWEEN #{start} AND #{end}
+	</sql>
+</mapper>
+

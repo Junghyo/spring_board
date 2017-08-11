@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yoda.board.repository.BoardDAOImpl">
+	<resultMap type="board" id="boardResult"/>
+		<select id="list" resultType="board">
+			<include refid="pagingHeader"/>
+			SELECT ROWNUM, B.NO, B.TITLE, B.CONTENT, B.REGDATE, B.WRITER, B.READCNT,
+			(SELECT COUNT(*) FROM REPLY R WHERE R.NO = B.NO) AS RECNT
+			FROM BOARD B, MEMBER M
+			<include refid="search"/>
+			ORDER BY NO DESC, REGDATE DESC
+			<include refid="pagingFooter"/>
+	</select>
+	<select id="countArticle" resultType="int">
+		SELECT COUNT(*) FROM BOARD B, MEMBER M
+		<include refid="search"></include>
+	</select>
+	<insert id="insert">
+		INSERT INTO BOARD(NO, TITLE, CONTENT, WRITER) VALUES(BOARD_SEQ.NEXTVAL, #{title}, #{content}, #{writer} )	
+	</insert>
+	<select id="read" resultType="board">
+		SELECT * FROM BOARD WHERE NO = #{no}
+	</select>
+	<select id="increaseReadCnt">
+		UPDATE BOARD SET READCNT = READCNT+1 WHERE NO = #{no}	
+	</select>
+	<update id="update">
+		UPDATE BOARD SET TITLE = #{title}, CONTENT = #{content} WHERE NO = #{no}
+	</update>
+	<delete id="delete">
+		DELETE FROM BOARD WHERE NO = #{no}
+	</delete>
+	
+	<sql id="search">
+		<choose>
+			<when test="option=='all'">
+				WHERE B.WRITER = M.NAME
+				AND 
+				(B.WRITER LIKE '%'||#{keyword}||'%'
+				OR B.CONTENT LIKE '%'||#{keyword}||'%'
+				OR B.TITLE LIKE '%'||#{keyword}||'%')
+			</when>
+			<otherwise>
+				WHERE B.WRITER = M.NAME
+				AND
+				${option} LIKE '%'||#{keyword}||'%'
+			</otherwise>
+		</choose>
+	</sql>
+	<!-- 페이징 sql -->
+	<sql id="pagingHeader">
+		SELECT * FROM (SELECT ROWNUM AS RN, A.* FROM (
+	</sql>
+	<sql id="pagingFooter">
+		) A ) WHERE RN BETWEEN #{start} AND #{end}
+	</sql>
+</mapper>	
